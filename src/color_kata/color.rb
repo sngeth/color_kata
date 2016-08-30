@@ -17,10 +17,22 @@ class Color
   end
 
   def cmyk_values
-    Converter.new(rgb: @color_array).to_cmyk
+    rgb? ? Converter.new(rgb: @color_array).to_cmyk : color_array
   end
 
   def rgb_values
-    Converter.new(cmyk: @color_array).to_rgb
+    cmyk? ? Converter.new(cmyk: @color_array).to_rgb : color_array
+  end
+
+  def ==(other)
+    self.rgb_values == other.rgb_values
+  end
+
+  def rgb?
+    @color_array.length == 3
+  end
+
+  def cmyk?
+    @color_array.length == 4
   end
 end
