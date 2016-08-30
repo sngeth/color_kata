@@ -2,6 +2,8 @@ class Color
   attr_accessor :color_array
 
   def initialize(args)
+    raise ArgumentError if out_of_range?(args) || invalid_inputs?(args)
+
     @color_array = Array.new
 
     if args.keys == [:r, :g, :b]
@@ -34,5 +36,23 @@ class Color
 
   def cmyk?
     @color_array.length == 4
+  end
+
+  def out_of_range?(args)
+    if args.keys == [:r, :g, :b]
+      args.each { |k,v| return true if v > 255}
+    elsif args.keys == [:c, :m, :y, :k]
+      args.each { |k,v| return true if v > 1.0}
+    end
+  end
+
+  def invalid_inputs?(args)
+    if args.keys != [:r, :g, :b]
+      return true
+    elsif args.keys != [:c, :m, :y, :k]
+      return true
+    end
+
+    return false
   end
 end
