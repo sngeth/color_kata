@@ -1,58 +1,89 @@
 class Color
-  attr_accessor :color_array
+  attr_accessor :color
 
   def initialize(args)
-    raise ArgumentError if out_of_range?(args) || invalid_inputs?(args)
-
-    @color_array = Array.new
-
-    if args.keys == [:r, :g, :b]
-      color_array << args[:r]
-      color_array << args[:g]
-      color_array << args[:b]
+    if is_rgb?(args)
+      @color = ColorRgb.new(args)
+    elsif is_cmyk?(args)
+      @color = ColorCmyk.new(args)
     else
-      color_array << args[:c]
-      color_array << args[:m]
-      color_array << args[:y]
-      color_array << args[:k]
+      raise ArgumentError, "Invalid input"
     end
+
+    validate!
+  end
+
+  def is_rgb?(args)
+    args.keys.all? { |k| [:r, :g, :b].include? k }
+  end
+
+  def is_cmyk?(args)
+    args.keys.all? { |k| [:c, :m, :y, :k].include? k }
   end
 
   def cmyk_values
-    rgb? ? Converter.new(rgb: @color_array).to_cmyk : color_array
+    @color.cmyk
   end
 
   def rgb_values
-    cmyk? ? Converter.new(cmyk: @color_array).to_rgb : color_array
+    @color.rgb
+  end
+
+  def validate!
+    raise ArgumentError, "Input out of range" if @color.out_of_range?
   end
 
   def ==(other)
-    self.rgb_values == other.rgb_values
+    self.color.rgb == other.color.rgb
   end
 
-  def rgb?
-    @color_array.length == 3
+end
+
+class ColorRgb < Color
+  attr_accessor :components
+
+  def initialize(args)
+    @components = Array.new
+    components << args[:r]
+    components << args[:g]
+    components << args[:b]
   end
 
-  def cmyk?
-    @color_array.length == 4
+  def rgb
+    components
   end
 
-  def out_of_range?(args)
-    if args.keys == [:r, :g, :b]
-      args.each { |k,v| return true if v > 255}
-    elsif args.keys == [:c, :m, :y, :k]
-      args.each { |k,v| return true if v > 1.0}
-    end
+  def cmyk
+    Converter.new(rgb: components).to_cmyk
   end
 
-  def invalid_inputs?(args)
-    if args.keys != [:r, :g, :b]
-      return true
-    elsif args.keys != [:c, :m, :y, :k]
-      return true
-    end
+  def out_of_range?
+    components.each { |v| return true if v > 255}
+    return false
+  end
+end
 
+class ColorCmyk < Color
+  attr_accessor :components
+
+  def initialize(args)
+    @components = Array.new
+    components << args[:c]
+    components << args[:m]
+    components << args[:y]
+    components << args[:k]
+  end
+
+  def cymk
+    components
+  end
+
+  def rgb
+    Converter.new(cmyk: components).to_rgb
+  end
+
+  def out_of_range?
+    components.each { |v| return true if v > 1.0}
     return false
   end
 end
